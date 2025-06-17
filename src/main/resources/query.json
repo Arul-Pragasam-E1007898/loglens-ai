@@ -1,0 +1,73 @@
+{
+  "searches": [
+    {
+      "header": {
+        "index": "freshservice*",
+        "preference": 1749204159811
+      },
+      "body": {
+        "version": true,
+        "size": 10000,
+        "sort": [
+          {
+            "@timestamp": {
+              "order": "desc",
+              "unmapped_type": "boolean"
+            }
+          },
+          {
+            "offset": {
+              "order": "desc",
+              "unmapped_type": "boolean"
+            }
+          }
+        ],
+        "stored_fields": [
+          "*"
+        ],
+        "script_fields": {},
+        "docvalue_fields": [
+          {
+            "field": "@timestamp",
+            "format": "date_time"
+          },
+          {
+            "field": "time",
+            "format": "date_time"
+          }
+        ],
+        "_source": {
+          "excludes": []
+        },
+        "query": {
+          "bool": {
+            "must": [
+              {
+                "query_string": {
+                  "query": "%Query%",
+                  "analyze_wildcard": true,
+                  "default_operator": "AND",
+                  "time_zone": "Asia/Calcutta"
+                }
+              }
+            ],
+            "filter": [
+              {
+                "range": {
+                  "@timestamp": {
+                    "gte": "%GTE%",
+                    "lte": "%LTE%",
+                    "format": "strict_date_optional_time"
+                  }
+                }
+              }
+            ],
+            "should": [],
+            "must_not": []
+          }
+        },
+        "track_total_hits": false
+      }
+    }
+  ]
+}
