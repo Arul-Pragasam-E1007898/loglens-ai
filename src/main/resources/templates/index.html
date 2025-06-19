@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Haystack Assistant</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #343541;
+            --bg-secondary: #444654;
+            --bg-input: #40414f;
+            --text-primary: #ececf1;
+            --text-secondary: #c5c5d2;
+            --border-color: #565869;
+            --accent-color: #10a37f;
+            --user-bg: #343541;
+            --assistant-bg: #444654;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .main-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 260px;
+            background-color: #202123;
+            border-right: 1px solid var(--border-color);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .new-chat-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .new-chat-btn:hover {
+            background-color: var(--bg-input);
+        }
+
+        .management-section {
+            margin-top: 20px;
+        }
+
+        .management-section h6 {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .management-input {
+            width: 100%;
+            padding: 8px 12px;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .management-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .management-btn {
+            width: 100%;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-bottom: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-index {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .btn-index:hover {
+            background-color: #0d8f6f;
+        }
+
+        .btn-clear {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        .btn-clear:hover {
+            background-color: #dc2626;
+        }
+
+        .quick-actions {
+            margin-top: 20px;
+        }
+
+        .quick-action-btn {
+            width: 100%;
+            padding: 8px 12px;
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            cursor: pointer;
+            margin-bottom: 6px;
+            text-align: left;
+            transition: all 0.2s;
+        }
+
+        .quick-action-btn:hover {
+            background-color: var(--bg-input);
+            color: var(--text-primary);
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .chat-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .chat-header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+        }
+
+        .message-wrapper {
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .message-wrapper.user {
+            background-color: var(--user-bg);
+        }
+
+        .message-wrapper.assistant {
+            background-color: var(--assistant-bg);
+        }
+
+        .message-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 24px;
+            display: flex;
+            gap: 16px;
+        }
+
+        .message-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .user-avatar {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .assistant-avatar {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .message-text {
+            flex: 1;
+            line-height: 1.6;
+            color: var(--text-primary);
+        }
+
+        .message-text h1, .message-text h2, .message-text h3, 
+        .message-text h4, .message-text h5, .message-text h6 {
+            margin-top: 24px;
+            margin-bottom: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .message-text h1:first-child, .message-text h2:first-child, 
+        .message-text h3:first-child, .message-text h4:first-child, 
+        .message-text h5:first-child, .message-text h6:first-child {
+            margin-top: 0;
+        }
+
+        .message-text p {
+            margin-bottom: 16px;
+        }
+
+        .message-text ul, .message-text ol {
+            margin-bottom: 16px;
+            padding-left: 24px;
+        }
+
+        .message-text li {
+            margin-bottom: 8px;
+        }
+
+        .message-text pre {
+            background-color: #1a1b26;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .message-text code {
+            background-color: rgba(135, 131, 120, 0.15);
+            color: #eb5757;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        .message-text pre code {
+            background-color: transparent;
+            color: var(--text-primary);
+            padding: 0;
+        }
+
+        .message-text blockquote {
+            border-left: 4px solid var(--accent-color);
+            padding-left: 16px;
+            margin: 16px 0;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .message-text table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 16px 0;
+        }
+
+        .message-text th, .message-text td {
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        .message-text th {
+            background-color: var(--bg-input);
+            font-weight: 600;
+        }
+
+        .chat-input-container {
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .chat-input-wrapper {
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .chat-input {
+            width: 100%;
+            padding: 16px 50px 16px 16px;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 16px;
+            resize: none;
+            outline: none;
+            min-height: 52px;
+            max-height: 200px;
+            line-height: 1.5;
+        }
+
+        .chat-input:focus {
+            border-color: var(--accent-color);
+        }
+
+        .chat-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .send-button {
+            position: absolute;
+            right: 8px;
+            bottom: 8px;
+            width: 36px;
+            height: 36px;
+            background-color: var(--accent-color);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .send-button:hover {
+            background-color: #0d8f6f;
+        }
+
+        .send-button:disabled {
+            background-color: var(--border-color);
+            cursor: not-allowed;
+        }
+
+        .typing-indicator {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 24px;
+            display: none;
+        }
+
+        .typing-indicator.show {
+            display: flex;
+            gap: 16px;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--text-secondary);
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typing {
+            0%, 80%, 100% { opacity: 0.3; }
+            40% { opacity: 1; }
+        }
+
+        .alert {
+            margin: 10px 0;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .alert-success {
+            background-color: rgba(16, 163, 127, 0.1);
+            border: 1px solid rgba(16, 163, 127, 0.3);
+            color: #10a37f;
+        }
+
+        .alert-danger {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+
+        .alert-warning {
+            background-color: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: #f59e0b;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background-color: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: var(--border-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: var(--text-secondary);
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                position: fixed;
+                top: 0;
+                left: -100%;
+                z-index: 1000;
+                transition: left 0.3s;
+            }
+
+            .sidebar.open {
+                left: 0;
+            }
+
+            .main-container {
+                flex-direction: column;
+            }
+
+            .chat-container {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">Haystack Assistant</div>
+                <button class="new-chat-btn" onclick="clearChat()">
+                    <i class="fas fa-plus"></i> New Chat
+                </button>
+            </div>
+
+            <div class="management-section">
+                <h6>Log Management</h6>
+                <input type="text" id="indexQuery" class="management-input" 
+                       placeholder="Enter search query...">
+                <button class="management-btn btn-index" onclick="indexLogs()">
+                    <i class="fas fa-database"></i> Index Logs
+                </button>
+                <button class="management-btn btn-clear" onclick="clearLogs()">
+                    <i class="fas fa-trash"></i> Clear All Logs
+                </button>
+                <div id="managementAlert"></div>
+            </div>
+
+            <div class="quick-actions">
+                <h6>Quick Actions</h6>
+                <button class="quick-action-btn" 
+                        onclick="sendPredefinedMessage('What are the most common errors in the logs?')">
+                    Common Errors
+                </button>
+                <button class="quick-action-btn" 
+                        onclick="sendPredefinedMessage('Show me recent warning messages')">
+                    Recent Warnings
+                </button>
+                <button class="quick-action-btn" 
+                        onclick="sendPredefinedMessage('Summarize the log activity from the last hour')">
+                    Activity Summary
+                </button>
+                <button class="quick-action-btn" 
+                        onclick="sendPredefinedMessage('Are there any performance issues?')">
+                    Performance Issues
+                </button>
+                <button class="quick-action-btn" 
+                        onclick="sendPredefinedMessage('Show me the top 10 most frequent log entries')">
+                    Top Log Entries
+                </button>
+                <button class="quick-action-btn" 
+                        onclick="sendPredefinedMessage('Analyze the error patterns in the logs')">
+                    Error Patterns
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Chat Area -->
+        <div class="chat-container">
+            <div class="chat-header">
+                <h1><i class="fas fa-robot"></i> Haystack Assistant</h1>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <div class="message-wrapper assistant">
+                    <div class="message-content">
+                        <div class="message-avatar assistant-avatar">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div class="message-text">
+                            <p>Hello! I'm your Haystack Assistant. I can help you analyze logs and answer questions about your indexed data.</p>
+                            <p>Here's what I can do:</p>
+                            <ul>
+                                <li><strong>Analyze Logs</strong> - Ask me about errors, warnings, or patterns in your logs</li>
+                                <li><strong>Search Data</strong> - Find specific information in your indexed content</li>
+                                <li><strong>Generate Reports</strong> - Create summaries and insights from your data</li>
+                                <li><strong>Troubleshoot Issues</strong> - Help identify and resolve problems</li>
+                            </ul>
+                            <p>To get started, either use the quick actions in the sidebar or ask me a question about your logs!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="typing-indicator" id="typingIndicator">
+                <div class="message-avatar assistant-avatar">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="typing-dots">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            </div>
+
+            <div class="chat-input-container">
+                <div class="chat-input-wrapper">
+                    <textarea id="chatInput" class="chat-input" 
+                              placeholder="Message Haystack Assistant..." 
+                              rows="1" 
+                              onkeydown="handleKeyDown(event)"
+                              oninput="autoResize(this)"></textarea>
+                    <button class="send-button" id="sendButton" onclick="sendMessage()">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script>
+        // Configure marked for better rendering
+        marked.setOptions({
+            breaks: true,
+            gfm: true,
+            highlight: function(code, lang) {
+                if (lang && Prism.languages[lang]) {
+                    return Prism.highlight(code, Prism.languages[lang], lang);
+                }
+                return code;
+            }
+        });
+
+        function handleKeyDown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const question = input.value.trim();
+            
+            if (!question) {
+                return;
+            }
+            
+            addMessage(question, 'user');
+            input.value = '';
+            input.style.height = 'auto';
+            
+            showTypingIndicator();
+            
+            fetch('/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ question: question })
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideTypingIndicator();
+                if (data.error) {
+                    addMessage('❌ **Error**: ' + data.error, 'assistant');
+                } else {
+                    addMessage(data.answer, 'assistant');
+                }
+            })
+            .catch(error => {
+                hideTypingIndicator();
+                addMessage('❌ **Error**: ' + error.message, 'assistant');
+            });
+        }
+
+        function sendPredefinedMessage(message) {
+            document.getElementById('chatInput').value = message;
+            sendMessage();
+        }
+
+        function addMessage(text, sender) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageWrapper = document.createElement('div');
+            messageWrapper.className = `message-wrapper ${sender}`;
+            
+            const messageContent = document.createElement('div');
+            messageContent.className = 'message-content';
+            
+            const avatar = document.createElement('div');
+            avatar.className = `message-avatar ${sender}-avatar`;
+            avatar.innerHTML = sender === 'user' ? 
+                '<i class="fas fa-user"></i>' : 
+                '<i class="fas fa-robot"></i>';
+            
+            const messageText = document.createElement('div');
+            messageText.className = 'message-text';
+            
+            if (sender === 'assistant') {
+                // Render markdown for assistant messages
+                messageText.innerHTML = marked.parse(text);
+                // Highlight code blocks
+                messageText.querySelectorAll('pre code').forEach((block) => {
+                    Prism.highlightElement(block);
+                });
+            } else {
+                // Plain text for user messages
+                messageText.textContent = text;
+            }
+            
+            messageContent.appendChild(avatar);
+            messageContent.appendChild(messageText);
+            messageWrapper.appendChild(messageContent);
+            chatMessages.appendChild(messageWrapper);
+            
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            document.getElementById('typingIndicator').classList.add('show');
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            document.getElementById('typingIndicator').classList.remove('show');
+        }
+
+        function clearChat() {
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = `
+                <div class="message-wrapper assistant">
+                    <div class="message-content">
+                        <div class="message-avatar assistant-avatar">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div class="message-text">
+                            <p>Hello! I'm your Haystack Assistant. I can help you analyze logs and answer questions about your indexed data.</p>
+                            <p>Here's what I can do:</p>
+                            <ul>
+                                <li><strong>Analyze Logs</strong> - Ask me about errors, warnings, or patterns in your logs</li>
+                                <li><strong>Search Data</strong> - Find specific information in your indexed content</li>
+                                <li><strong>Generate Reports</strong> - Create summaries and insights from your data</li>
+                                <li><strong>Troubleshoot Issues</strong> - Help identify and resolve problems</li>
+                            </ul>
+                            <p>To get started, either use the quick actions in the sidebar or ask me a question about your logs!</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function indexLogs() {
+            const query = document.getElementById('indexQuery').value.trim();
+            
+            if (!query) {
+                showAlert('Please enter a query to index logs.', 'warning');
+                return;
+            }
+            
+            fetch('/api/index', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ query: query })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showAlert(data.error, 'danger');
+                } else {
+                    showAlert(data.message, 'success');
+                    document.getElementById('indexQuery').value = '';
+                }
+            })
+            .catch(error => {
+                showAlert('Error: ' + error.message, 'danger');
+            });
+        }
+
+        function clearLogs() {
+            if (!confirm('Are you sure you want to clear all indexed logs?')) {
+                return;
+            }
+            
+            fetch('/api/clear', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showAlert(data.error, 'danger');
+                } else {
+                    showAlert(data.message, 'success');
+                }
+            })
+            .catch(error => {
+                showAlert('Error: ' + error.message, 'danger');
+            });
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.getElementById('managementAlert');
+            alertDiv.innerHTML = `
+                <div class="alert alert-${type}">
+                    ${message}
+                </div>
+            `;
+            
+            // Auto-hide success messages after 3 seconds
+            if (type === 'success') {
+                setTimeout(() => {
+                    alertDiv.innerHTML = '';
+                }, 3000);
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('chatInput').focus();
+        });
+    </script>
+</body>
+</html> 
