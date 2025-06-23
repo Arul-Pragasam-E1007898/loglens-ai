@@ -6,6 +6,7 @@ import com.freshworks.rag.haystack.util.RestClient;
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.DocumentSplitter;
+import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.data.document.splitter.DocumentSplitters;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
@@ -42,7 +43,8 @@ public class IndexerTool {
 
         Response response = restClient.query(payload, COOKIE);
         List<String> logLines = ResponseParser.parse(response);
-        List<Document> logDocuments = logLines.stream().map(Document::from).collect(Collectors.toList());
+        Metadata metadata = Metadata.from("traceId", query);
+        List<Document> logDocuments = logLines.stream().map(line -> Document.from(line, metadata)).collect(Collectors.toList());
         index(logDocuments);
         System.out.println("Indexed " + logLines.size() + " documents related to - " + query);
     }
@@ -57,7 +59,9 @@ public class IndexerTool {
 
         // Process all documents
         for (Document line : logLines) {
-            List<TextSegment> segments = splitter.split(line);
+            List<TextSegment> segments = splitter.split(line).stream()
+                    .map(segment -> TextSegment.from(segment.text(), line.metadata()))
+                    .collect(Collectors.toList());
             List<Embedding> embeddings = embeddingModel.embedAll(segments).content();
             store.addAll(embeddings, segments);
         }
