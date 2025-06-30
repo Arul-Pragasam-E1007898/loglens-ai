@@ -4,11 +4,10 @@ import com.freshworks.rag.haystack.tools.IndexerTool;
 import com.freshworks.rag.haystack.util.ConsoleAssistantBot;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.embedding.onnx.allminilml6v2q.AllMiniLmL6V2QuantizedEmbeddingModel;
-import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
-import dev.langchain4j.model.ollama.OllamaChatModel;
+import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.store.embedding.EmbeddingStore;
@@ -27,7 +26,7 @@ import java.io.IOException;
  */
 public class HaystackAssistant {
 
-    private static final String GEMINI_API_KEY = System.getenv("GEMINI_API_KEY");
+    private static final String key = System.getenv("CLOUDVERSE_TOKEN");
 
     public static void main(String[] args) throws IOException {
         System.out.println("=== Haystack Assistant Console ===");
@@ -43,9 +42,10 @@ public class HaystackAssistant {
         IndexerTool tool = new IndexerTool(embeddingModel, embeddingStore);
 
         // Initialize Ollama model
-        ChatLanguageModel chatModel = GoogleAiGeminiChatModel.builder()
-                .modelName("gemini-2.0-flash")
-                .apiKey(GEMINI_API_KEY)
+        ChatModel openAiChatModel = OpenAiChatModel.builder()
+                .baseUrl("https://cloudverse.freshworkscorp.com/api/v1")
+                .modelName("Azure-GPT-4.1")
+                .apiKey(key)
                 .build();
 
         EmbeddingStoreContentRetriever contentRetriever = EmbeddingStoreContentRetriever.builder()
@@ -56,7 +56,7 @@ public class HaystackAssistant {
 
         // Create RAG assistant
         Assistant assistant = AiServices.builder(Assistant.class)
-                .chatLanguageModel(chatModel)
+                .chatModel(openAiChatModel)
                 .chatMemory(MessageWindowChatMemory.withMaxMessages(1000))
                 .contentRetriever(contentRetriever)
                 .tools(tool)

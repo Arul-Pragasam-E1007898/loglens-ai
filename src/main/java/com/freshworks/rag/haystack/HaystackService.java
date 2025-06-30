@@ -3,25 +3,23 @@ package com.freshworks.rag.haystack;
 import com.freshworks.rag.haystack.tools.IndexerTool;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.embedding.onnx.allminilml6v2q.AllMiniLmL6V2QuantizedEmbeddingModel;
-import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
+import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
-import org.springframework.beans.factory.annotation.Value;
+import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 
-import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 
 @Service
 public class HaystackService {
 
-    @Value("${gemini.api.key:#{environment.GEMINI_API_KEY}}")
-    private String geminiApiKey;
+    private static final String key = System.getenv("CLOUDVERSE_TOKEN");
 
     private Assistant assistant;
     private IndexerTool indexerTool;
@@ -38,9 +36,10 @@ public class HaystackService {
         indexerTool = new IndexerTool(embeddingModel, embeddingStore);
 
         // Initialize Gemini model
-        ChatLanguageModel chatModel = GoogleAiGeminiChatModel.builder()
-                .modelName("gemini-2.0-flash")
-                .apiKey(geminiApiKey)
+        ChatModel openAiChatModel = OpenAiChatModel.builder()
+                .baseUrl("https://cloudverse.freshworkscorp.com/api/v1")
+                .modelName("Azure-GPT-4.1")
+                .apiKey(key)
                 .build();
 
         EmbeddingStoreContentRetriever contentRetriever = EmbeddingStoreContentRetriever.builder()
@@ -51,7 +50,7 @@ public class HaystackService {
 
         // Create RAG assistant
         assistant = AiServices.builder(Assistant.class)
-                .chatLanguageModel(chatModel)
+                .chatModel(openAiChatModel)
                 .chatMemory(MessageWindowChatMemory.withMaxMessages(1000))
                 .contentRetriever(contentRetriever)
                 .tools(indexerTool)
